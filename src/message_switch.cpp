@@ -7,7 +7,7 @@ class message_switch
 {
 private:
 	ros::NodeHandle nh;
-	ros::Subscriber sub_topics[2];
+	ros::Subscriber sub_topics[3];
 	ros::Subscriber sub_select;
 	ros::Publisher pub_topic;
 	double timeout;
@@ -43,6 +43,8 @@ public:
 				boost::bind(&message_switch::cb_topic, this, _1, 0));
 		sub_topics[1] = nh.subscribe<topic_tools::ShapeShifter>("input1", 1, 
 				boost::bind(&message_switch::cb_topic, this, _1, 1));
+		sub_topics[2] = nh.subscribe<topic_tools::ShapeShifter>("input2", 1, 
+				boost::bind(&message_switch::cb_topic, this, _1, 2));
 
 		nh.param("timeout", timeout, 0.5);
 		last_select_msgs = ros::Time::now();
