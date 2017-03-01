@@ -7,7 +7,7 @@ class message_switch
 {
 private:
 	ros::NodeHandle nh;
-	ros::Subscriber sub_topics[3];
+	std::vector<ros::Subscriber> sub_topics;
 	ros::Subscriber sub_select;
 	ros::Publisher pub_topic;
 	double timeout;
@@ -16,6 +16,12 @@ private:
 	bool advertised;
 	int selected;
 
+	void add_topic(const int id)
+	{
+		sub_topics.push_back(
+				nh.subscribe<topic_tools::ShapeShifter>("input" + std::to_string(id), 1, 
+				boost::bind(&message_switch::cb_topic, this, _1, id)));
+	}
 	void cb_select(const std_msgs::Int32::Ptr msg)
 	{
 		last_select_msgs = ros::Time::now();
@@ -39,12 +45,6 @@ public:
 		nh("~")
 	{
 		sub_select = nh.subscribe("select", 1, &message_switch::cb_select, this);
-		sub_topics[0] = nh.subscribe<topic_tools::ShapeShifter>("input0", 1, 
-				boost::bind(&message_switch::cb_topic, this, _1, 0));
-		sub_topics[1] = nh.subscribe<topic_tools::ShapeShifter>("input1", 1, 
-				boost::bind(&message_switch::cb_topic, this, _1, 1));
-		sub_topics[2] = nh.subscribe<topic_tools::ShapeShifter>("input2", 1, 
-				boost::bind(&message_switch::cb_topic, this, _1, 2));
 
 		nh.param("timeout", timeout, 0.5);
 		last_select_msgs = ros::Time::now();
@@ -54,6 +54,9 @@ public:
 	}
 	void spin()
 	{
+		int num = 1;
+		add_topic(num - 1);
+
 		ros::Rate wait(10);
 		while(ros::ok())
 		{
@@ -62,6 +65,17 @@ public:
 			if(ros::Time::now() - last_select_msgs > ros::Duration(timeout))
 			{
 				selected = 0;
+			}
+			bool remain(true);
+			for(auto &sub: sub_topics)
+			{
+				if(sub.getNumPublishers() == 0)
+					remain = false;
+			}
+			if(remain)
+			{
+				num ++;
+				add_topic(num - 1);
 			}
 		}
 	}
