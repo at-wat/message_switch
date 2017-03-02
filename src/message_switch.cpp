@@ -15,6 +15,7 @@ private:
 	ros::Time last_select_msgs;
 	bool advertised;
 	int selected;
+	int default_select;
 
 	void add_topic(const int id)
 	{
@@ -47,10 +48,11 @@ public:
 		sub_select = nh.subscribe("select", 1, &message_switch::cb_select, this);
 
 		nh.param("timeout", timeout, 0.5);
+		nh.param("default", default_select, 0);
 		last_select_msgs = ros::Time::now();
 
 		advertised = false;
-		selected = 0;
+		selected = default_select;
 	}
 	void spin()
 	{
@@ -64,7 +66,7 @@ public:
 			ros::spinOnce();
 			if(ros::Time::now() - last_select_msgs > ros::Duration(timeout))
 			{
-				selected = 0;
+				selected = default_select;
 			}
 			bool remain(true);
 			for(auto &sub: sub_topics)
