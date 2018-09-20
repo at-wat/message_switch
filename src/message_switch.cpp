@@ -48,19 +48,19 @@ private:
   int selected_;
   int default_select_;
 
-  void add_topic(const int id)
+  void addTopic(const int id)
   {
     sub_topics_.push_back(
         nh_.subscribe<topic_tools::ShapeShifter>(
             "input" + std::to_string(id), 1,
-            boost::bind(&MessageSwitch::cb_topic, this, _1, id)));
+            boost::bind(&MessageSwitch::cbTopic, this, _1, id)));
   }
-  void cb_select(const std_msgs::Int32::Ptr msg)
+  void cbSelect(const std_msgs::Int32::Ptr msg)
   {
     last_select_msgs_ = ros::Time::now();
     selected_ = msg->data;
   }
-  void cb_topic(const boost::shared_ptr<topic_tools::ShapeShifter const> &msg, int id)
+  void cbTopic(const boost::shared_ptr<topic_tools::ShapeShifter const> &msg, int id)
   {
     if (selected_ == id)
     {
@@ -78,7 +78,7 @@ public:
     : nh_()
     , pnh_("~")
   {
-    sub_select_ = nh_.subscribe("select", 1, &MessageSwitch::cb_select, this);
+    sub_select_ = nh_.subscribe("select", 1, &MessageSwitch::cbSelect, this);
 
     pnh_.param("timeout", timeout_, 0.5);
     pnh_.param("default", default_select_, 0);
@@ -88,7 +88,7 @@ public:
     selected_ = default_select_;
 
     timer_ = nh.createTimer(ros::Duration(0.1), &MessageSwitch::cbTimer, this);
-    add_topic();
+    addTopic();
   }
   void cbTimer(const ros::TimerEvent &event)
   {
@@ -104,7 +104,7 @@ public:
     }
     if (remain)
     {
-      add_topic();
+      addTopic();
     }
   }
 };
