@@ -37,6 +37,7 @@ class MessageSwitch
 {
 private:
   ros::NodeHandle nh_;
+  ros::NodeHandle pnh_;
   std::vector<ros::Subscriber> sub_topics_;
   ros::Subscriber sub_select_;
   ros::Publisher pub_topic_;
@@ -74,12 +75,13 @@ private:
 
 public:
   MessageSwitch()
-    : nh_("~")
+    : nh_()
+    , pnh_("~")
   {
     sub_select_ = nh_.subscribe("select", 1, &MessageSwitch::cb_select, this);
 
-    nh_.param("timeout", timeout_, 0.5);
-    nh_.param("default", default_select_, 0);
+    pnh_.param("timeout", timeout_, 0.5);
+    pnh_.param("default", default_select_, 0);
     last_select_msgs_ = ros::Time::now();
 
     advertised_ = false;
