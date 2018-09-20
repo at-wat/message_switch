@@ -48,8 +48,9 @@ private:
   int selected_;
   int default_select_;
 
-  void addTopic(const int id)
+  void addTopic()
   {
+    const int id = sub_topics_.size();
     sub_topics_.push_back(
         nh_.subscribe<topic_tools::ShapeShifter>(
             "input" + std::to_string(id), 1,
@@ -87,7 +88,7 @@ public:
     advertised_ = false;
     selected_ = default_select_;
 
-    timer_ = nh.createTimer(ros::Duration(0.1), &MessageSwitch::cbTimer, this);
+    timer_ = nh_.createTimer(ros::Duration(0.1), &MessageSwitch::cbTimer, this);
     addTopic();
   }
   void cbTimer(const ros::TimerEvent &event)
