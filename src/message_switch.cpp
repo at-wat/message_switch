@@ -36,16 +36,16 @@
 class MessageSwitch
 {
 private:
-  ros::NodeHandle nh;
-  std::vector<ros::Subscriber> sub_topics;
-  ros::Subscriber sub_select;
-  ros::Publisher pub_topic;
-  ros::Timer timer;
-  double timeout;
-  ros::Time last_select_msgs;
-  bool advertised;
-  int selected;
-  int default_select;
+  ros::NodeHandle nh_;
+  std::vector<ros::Subscriber> sub_topics_;
+  ros::Subscriber sub_select_;
+  ros::Publisher pub_topic_;
+  ros::Timer timer_;
+  double timeout_;
+  ros::Time last_select_msgs_;
+  bool advertised_;
+  int selected_;
+  int default_select_;
 
   void add_topic(const int id)
   {
@@ -56,17 +56,17 @@ private:
   }
   void cb_select(const std_msgs::Int32::Ptr msg)
   {
-    last_select_msgs = ros::Time::now();
-    selected = msg->data;
+    last_select_msgs_ = ros::Time::now();
+    selected_ = msg->data;
   }
   void cb_topic(const boost::shared_ptr<topic_tools::ShapeShifter const> &msg, int id)
   {
-    if (selected == id)
+    if (selected_ == id)
     {
-      if (!advertised)
+      if (!advertised_)
       {
-        advertised = true;
-        pub_topic = msg->advertise(nh, "output", 1, false);
+        advertised_ = true;
+        pub_topic_ = msg->advertise(nh_, "output", 1, false);
       }
       pub_topic_.publish(*msg);
     }
@@ -74,28 +74,28 @@ private:
 
 public:
   MessageSwitch()
-    : nh("~")
+    : nh_("~")
   {
-    sub_select = nh_.subscribe("select", 1, &MessageSwitch::cb_select, this);
+    sub_select_ = nh_.subscribe("select", 1, &MessageSwitch::cb_select, this);
 
-    nh_.param("timeout", timeout, 0.5);
-    nh_.param("default", default_select, 0);
-    last_select_msgs = ros::Time::now();
+    nh_.param("timeout", timeout_, 0.5);
+    nh_.param("default", default_select_, 0);
+    last_select_msgs_ = ros::Time::now();
 
-    advertised = false;
-    selected = default_select;
+    advertised_ = false;
+    selected_ = default_select_;
 
-    timer = nh.createTimer(ros::Duration(0.1), &MessageSwitch::cbTimer, this);
+    timer_ = nh.createTimer(ros::Duration(0.1), &MessageSwitch::cbTimer, this);
     add_topic();
   }
   void cbTimer(const ros::TimerEvent &event)
   {
-    if (ros::Time::now() - last_select_msgs > ros::Duration(timeout))
+    if (ros::Time::now() - last_select_msgs_ > ros::Duration(timeout_))
     {
-      selected = default_select;
+      selected_ = default_select_;
     }
     bool remain(true);
-    for (auto &sub : sub_topics)
+    for (auto &sub : sub_topics_)
     {
       if (sub.getNumPublishers() == 0)
         remain = false;
