@@ -33,15 +33,15 @@
 #include <std_msgs/Int32.h>
 #include <topic_tools/shape_shifter.h>
 
-class message_switch
+class MessageSwitch
 {
 private:
   ros::NodeHandle nh;
   std::vector<ros::Subscriber> sub_topics;
   ros::Subscriber sub_select;
   ros::Publisher pub_topic;
+  ros::Timer timer;
   double timeout;
-  int interrupt_button;
   ros::Time last_select_msgs;
   bool advertised;
   int selected;
@@ -49,10 +49,10 @@ private:
 
   void add_topic(const int id)
   {
-    sub_topics.push_back(
-        nh.subscribe<topic_tools::ShapeShifter>(
+    sub_topics_.push_back(
+        nh_.subscribe<topic_tools::ShapeShifter>(
             "input" + std::to_string(id), 1,
-            boost::bind(&message_switch::cb_topic, this, _1, id)));
+            boost::bind(&MessageSwitch::cb_topic, this, _1, id)));
   }
   void cb_select(const std_msgs::Int32::Ptr msg)
   {
@@ -68,48 +68,41 @@ private:
         advertised = true;
         pub_topic = msg->advertise(nh, "output", 1, false);
       }
-      pub_topic.publish(*msg);
+      pub_topic_.publish(*msg);
     }
   }
 
 public:
-  message_switch()
+  MessageSwitch()
     : nh("~")
   {
-    sub_select = nh.subscribe("select", 1, &message_switch::cb_select, this);
+    sub_select = nh_.subscribe("select", 1, &MessageSwitch::cb_select, this);
 
-    nh.param("timeout", timeout, 0.5);
-    nh.param("default", default_select, 0);
+    nh_.param("timeout", timeout, 0.5);
+    nh_.param("default", default_select, 0);
     last_select_msgs = ros::Time::now();
 
     advertised = false;
     selected = default_select;
-  }
-  void spin()
-  {
-    int num = 1;
-    add_topic(num - 1);
 
-    ros::Rate wait(10);
-    while (ros::ok())
+    timer = nh.createTimer(ros::Duration(0.1), &MessageSwitch::cbTimer, this);
+    add_topic();
+  }
+  void cbTimer(const ros::TimerEvent &event)
+  {
+    if (ros::Time::now() - last_select_msgs > ros::Duration(timeout))
     {
-      wait.sleep();
-      ros::spinOnce();
-      if (ros::Time::now() - last_select_msgs > ros::Duration(timeout))
-      {
-        selected = default_select;
-      }
-      bool remain(true);
-      for (auto &sub : sub_topics)
-      {
-        if (sub.getNumPublishers() == 0)
-          remain = false;
-      }
-      if (remain)
-      {
-        num++;
-        add_topic(num - 1);
-      }
+      selected = default_select;
+    }
+    bool remain(true);
+    for (auto &sub : sub_topics)
+    {
+      if (sub.getNumPublishers() == 0)
+        remain = false;
+    }
+    if (remain)
+    {
+      add_topic();
     }
   }
 };
@@ -118,8 +111,8 @@ int main(int argc, char *argv[])
 {
   ros::init(argc, argv, "message_switch");
 
-  message_switch ms;
-  ms.spin();
+  MessageSwitch ms;
+  ros::spin();
 
   return 0;
 }
