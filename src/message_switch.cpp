@@ -52,7 +52,7 @@ private:
   {
     const int id = sub_topics_.size();
     sub_topics_.push_back(
-        nh_.subscribe<topic_tools::ShapeShifter>(
+        pnh_.subscribe<topic_tools::ShapeShifter>(
             "input" + std::to_string(id), 1,
             boost::bind(&MessageSwitch::cbTopic, this, _1, id)));
   }
@@ -68,7 +68,7 @@ private:
       if (!advertised_)
       {
         advertised_ = true;
-        pub_topic_ = msg->advertise(nh_, "output", 1, false);
+        pub_topic_ = msg->advertise(pnh_, "output", 1, false);
       }
       pub_topic_.publish(*msg);
     }
@@ -79,7 +79,7 @@ public:
     : nh_()
     , pnh_("~")
   {
-    sub_select_ = nh_.subscribe("select", 1, &MessageSwitch::cbSelect, this);
+    sub_select_ = pnh_.subscribe("select", 1, &MessageSwitch::cbSelect, this);
 
     pnh_.param("timeout", timeout_, 0.5);
     pnh_.param("default", default_select_, 0);
